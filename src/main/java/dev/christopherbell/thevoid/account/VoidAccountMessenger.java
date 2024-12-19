@@ -13,11 +13,11 @@ import java.util.List;
 @AllArgsConstructor
 @Service
 @Slf4j
-public class AccountMessenger {
+public class VoidAccountMessenger {
 
-  private final AccountRepository accountRepository;
-  private final AccountDetailsRepository accountDetailsRepository;
-  private final AccountSecurityRepository accountSecurityRepository;
+  private final VoidAccountRepository voidAccountRepository;
+  private final VoidAccountDetailsRepository voidAccountDetailsRepository;
+  private final VoidAccountSecurityRepository voidAccountSecurityRepository;
 
 
   /**
@@ -25,7 +25,7 @@ public class AccountMessenger {
    * @return
    */
   public List<AccountEntity> getAccountEntities() {
-    return this.accountRepository.findAll();
+    return this.voidAccountRepository.findAll();
   }
 
   /**
@@ -35,7 +35,7 @@ public class AccountMessenger {
    * @throws ResourceNotFoundException
    */
   public AccountEntity getAccountEntityById(Long id) throws ResourceNotFoundException {
-    var maybeAccountEntity = this.accountRepository.findById(id);
+    var maybeAccountEntity = this.voidAccountRepository.findById(id);
     if (maybeAccountEntity.isEmpty()) {
       throw new ResourceNotFoundException();
     }
@@ -49,7 +49,7 @@ public class AccountMessenger {
    * @throws ResourceNotFoundException
    */
   public AccountEntity getAccountEntityByUsername(String username) throws ResourceNotFoundException {
-    var maybeAccountEntity = this.accountRepository.findByUsername(username);
+    var maybeAccountEntity = this.voidAccountRepository.findByUsername(username);
     if (maybeAccountEntity.isEmpty()) {
       throw new ResourceNotFoundException();
     }
@@ -63,7 +63,7 @@ public class AccountMessenger {
    * @throws ResourceNotFoundException
    */
   public AccountDetailsEntity getAccountDetailsEntityById(Long id) throws ResourceNotFoundException {
-    var maybeAccountDetailsEntity = this.accountDetailsRepository.findById(id);
+    var maybeAccountDetailsEntity = this.voidAccountDetailsRepository.findById(id);
     if (maybeAccountDetailsEntity.isEmpty()) {
       throw new ResourceNotFoundException();
     }
@@ -77,7 +77,7 @@ public class AccountMessenger {
    * @throws ResourceNotFoundException
    */
   public AccountSecurityEntity getAccountSecurityEntityByEmail(String email) throws ResourceNotFoundException {
-    var maybeAccountSecurityEntity = this.accountSecurityRepository.findByEmail(email);
+    var maybeAccountSecurityEntity = this.voidAccountSecurityRepository.findByEmail(email);
     if (maybeAccountSecurityEntity.isEmpty()) {
       throw new ResourceNotFoundException();
     }
@@ -91,7 +91,7 @@ public class AccountMessenger {
    * @throws ResourceNotFoundException
    */
   public AccountSecurityEntity getAccountSecurityEntityById(Long id) throws ResourceNotFoundException {
-    var maybeAccountSecurityEntity = this.accountSecurityRepository.findById(id);
+    var maybeAccountSecurityEntity = this.voidAccountSecurityRepository.findById(id);
     if (maybeAccountSecurityEntity.isEmpty()) {
       throw new ResourceNotFoundException();
     }
@@ -103,7 +103,7 @@ public class AccountMessenger {
    * @param accountEntity
    */
   public void saveAccountRepository(AccountEntity accountEntity) {
-    this.accountRepository.save(accountEntity);
+    this.voidAccountRepository.save(accountEntity);
   }
 
   /**
@@ -111,7 +111,7 @@ public class AccountMessenger {
    * @param accountDetailsEntity
    */
   public void saveAccountDetailsRepository(AccountDetailsEntity accountDetailsEntity) {
-    this.accountDetailsRepository.save(accountDetailsEntity);
+    this.voidAccountDetailsRepository.save(accountDetailsEntity);
   }
 
   /**
@@ -119,7 +119,7 @@ public class AccountMessenger {
    * @param accountSecurityEntity
    */
   public void saveAccountSecurityRepository(AccountSecurityEntity accountSecurityEntity) {
-    this.accountSecurityRepository.save(accountSecurityEntity);
+    this.voidAccountSecurityRepository.save(accountSecurityEntity);
   }
 
   /**
@@ -128,6 +128,6 @@ public class AccountMessenger {
    * @return
    */
   public List<AccountEntity> searchAccounts(String searchTerm) {
-    return this.accountRepository.findByUsernameContaining(searchTerm);
+    return this.voidAccountRepository.findByUsernameContaining(searchTerm);
   }
 }

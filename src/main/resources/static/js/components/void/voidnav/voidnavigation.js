@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { Link } from 'react-router-dom';
-import './navigation.css';
+import './voidnavigation.css';
 import Search from '../forms/search.js'
 
-export default class Navigation extends Component {
+export default class VoidNavigation extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -49,8 +49,8 @@ export default class Navigation extends Component {
 }
 
 window.addEventListener('load', () => {
-  if (document.body.contains(document.getElementById('nav'))) {
+  if (document.body.contains(document.getElementById('void-nav'))) {
     // Used to render the component on the page. The default refresh is when state is changed.
-    ReactDOM.render(<Navigation />, document.getElementById('nav'));
+    ReactDOM.render(<VoidNavigation />, document.getElementById('void-nav'));
   }
 });

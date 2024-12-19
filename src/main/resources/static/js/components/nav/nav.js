@@ -1,52 +1,60 @@
-import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
-import NavDropDown from './navitems/navdropdown/navdropdown.js';
-import NavStdItem from "./navitems/navstditem/navstditem.js";
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-/*
-    This component represents the top navigation for the site. It includes the top level
-    Nav component and two components to represent NavItems. One being a NavStdItem,
-    which is the standard navigation item. The second being the NavDropItem, which
-    represents a navigation item that can include a sub navigation.
-*/
-export default class Nav extends Component {
-    // Below is a set of JSX that will be rendered into html.
-    render() {
-        return (
-            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-                <div class="container-fluid">
-                    <a class="navbar-brand" href="/">Home</a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                            {/* Usage of a NavStdItem */}
-                            <NavStdItem name="Blog" url="/blog" />
-                            {/* Usage of a NavDropDown */}
-                            <NavDropDown name="Photography" />
-                            <NavStdItem name="What's For Lunch" url="/wfl" />
-                        </ul>
-                    </div>
+const Nav = ({ isAuthenticated, onLogout }) => {
+    return (
+        <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div className="container-fluid">
+                <Link to="/" className="navbar-brand">Home</Link>
+                <button
+                    className="navbar-toggler collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent"
+                    aria-controls="navbarSupportedContent"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation"
+                >
+                    <span className="navbar-toggler-icon"></span>
+                </button>
+                <div className="navbar-collapse collapse" id="navbarSupportedContent">
+                    <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li className="nav-item">
+                            <Link to="/blog" className="nav-link">Blog</Link>
+                        </li>
+                        <li className="nav-item">
+                            <Link to="/photos" className="nav-link">Photography</Link>
+                        </li>
+                        <li className="nav-item">
+                            <Link to="/wfl" className="nav-link">What's For Lunch</Link>
+                        </li>
+                    </ul>
+
+                    {/* Different containers for Login/Sign-up and Logout */}
+                    {!isAuthenticated ? (
+                        <div className="d-lg-flex col-lg-3 justify-content-lg-end">
+                            <Link to="/login" className="btn btn-outline-light me-2">
+                                Login
+                            </Link>
+                            <Link to="/signup" className="btn btn-warning">
+                                Sign-up
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="col-auto d-flex justify-content-end align-items-center">
+                            <button
+                                type="button"
+                                className="btn btn-danger btn-md" // Use btn-md for medium size
+                                onClick={onLogout}
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    )}
                 </div>
-            </nav>
-        );
-    }
-}
+            </div>
+        </nav>
+    );
+};
 
-/* 
-    This seems to be important from my findings. If the page doesn't include that component,
-    then it will still try to render without the EventListener. This will cause React to throw
-    an error about not finding the DOM item. This method prevents the render function from
-    loading if the component isn't on the page.
-
-    I think there might be a better solution to this. I think that solution might include
-    not including the js for smaller components in Main.js
-*/
-window.addEventListener('load', () => {
-    if (document.body.contains(document.getElementById('nav'))) {
-        // Used to render the component on the page. The default refresh is when state is changed.
-        ReactDOM.render(<Nav />, document.getElementById('nav'));
-    }
-});
+export default Nav;

@@ -1,24 +1,86 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
-import { Routes, Route, Link } from "react-router-dom";
-import HomePage from './home_page.jsx';
-import LoginPage from './login_page.jsx';
+import { Routes, Route, Navigate } from "react-router-dom";
+import BlogPage from './blog.jsx';
+import HomePage from './home.jsx';
 import Layout from './layout.jsx';
+import LoginPage from './login.jsx';
+import PhotosPage from './photos.jsx';
 import NoMatch from "./no-match.jsx";
-import SignUpPage from './sign_up_page.jsx';
-import ProfilePage from './profile_page.jsx';
+import SignUpPage from './signup.jsx';
+import WhatsForLunchPage from './wfl.jsx';
+
+// Protected Route Wrapper
+const ProtectedRoute = ({ isAuthenticated, children }) => {
+    if (!isAuthenticated) {
+        // Redirect to login if not authenticated
+        return <Navigate to="/login" />;
+    }
+    return children;
+};
 
 class App extends Component {
+    constructor(props) {
+        super(props);
+
+        // Initialize state to track authentication
+        this.state = {
+            isAuthenticated: !!localStorage.getItem('cbellLoginToken'),
+        };
+    }
+
+    handleLogin = (token) => {
+        // Save the token in localStorage
+        localStorage.setItem('cbellLoginToken', token);
+
+        // Update the state
+        this.setState({ isAuthenticated: true });
+    };
+
+    handleLogout = () => {
+        // Remove the token from localStorage
+        localStorage.removeItem('cbellLoginToken');
+
+        // Update the state
+        this.setState({ isAuthenticated: false });
+    };
+
     render() {
         return (
             <div id="app-root">
                 <Routes>
-                    <Route path="/void/" element={<Layout />} >
+                    {/* Public routes */}
+                    <Route path="/" element={<Layout isAuthenticated={this.state.isAuthenticated} onLogout={this.handleLogout} />}>
                         <Route index element={<HomePage />} />
-                        <Route path="/void/login" element={<LoginPage />} />
-                        <Route path="/void/signup" element={<SignUpPage />} />
-                        <Route path="/void/profile/*" element={<ProfilePage />} />
-                        <Route path="/void/*" element={<NoMatch />} />
+                        <Route path="/login" element={<LoginPage onLogin={this.handleLogin} />} />
+                        <Route path="/signup" element={<SignUpPage />} />
+
+                        {/* Protected routes */}
+                        <Route
+                            path="/blog"
+                            element={
+                                <ProtectedRoute isAuthenticated={this.state.isAuthenticated}>
+                                    <BlogPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/photos"
+                            element={
+                                <ProtectedRoute isAuthenticated={this.state.isAuthenticated}>
+                                    <PhotosPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/wfl"
+                            element={
+                                <ProtectedRoute isAuthenticated={this.state.isAuthenticated}>
+                                    <WhatsForLunchPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        {/* Catch-all route */}
+                        <Route path="/*" element={<NoMatch />} />
                     </Route>
                 </Routes>
             </div>

@@ -23,7 +23,6 @@
   </properties>
 
   <dependencies>
-
     <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-actuator -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -67,24 +66,36 @@
       <version>${spring.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-test</artifactId>
-      <version>6.4.1</version> <!-- Use the appropriate version based on your Spring Security version -->
-    </dependency>
-
+    <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-devtools -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-devtools</artifactId>
+      <version>${spring.version}</version>
       <optional>true</optional>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/org.springframework.security/spring-security-test -->
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <version>6.4.1</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/com.azure/azure-data-tables -->
+    <dependency>
+      <groupId>com.azure</groupId>
+      <artifactId>azure-data-tables</artifactId>
+      <version>12.5.0</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/com.samaxes.maven/minify-maven-plugin -->
     <dependency>
       <groupId>com.samaxes.maven</groupId>
       <artifactId>minify-maven-plugin</artifactId>
       <version>1.7.6</version>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/org.codehaus.mojo/exec-maven-plugin -->
     <dependency>
       <groupId>org.codehaus.mojo</groupId>
       <artifactId>exec-maven-plugin</artifactId>
@@ -106,6 +117,7 @@
       <version>1.18.3</version>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/org.mapstruct/mapstruct -->
     <dependency>
       <groupId>org.mapstruct</groupId>
       <artifactId>mapstruct</artifactId>
@@ -119,6 +131,7 @@
       <version>0.12.6</version>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui -->
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -140,7 +153,6 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
         <executions>
           <execution>
-            <!-- Spring Boot Actuator displays build-related information if a META-INF/build-info.properties file is present -->
             <goals>
               <goal>build-info</goal>
             </goals>

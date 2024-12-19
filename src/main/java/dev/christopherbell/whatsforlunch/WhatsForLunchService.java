@@ -1,5 +1,6 @@
 package dev.christopherbell.whatsforlunch;
 
+import com.azure.data.tables.TableClient;
 import dev.christopherbell.libs.common.api.exceptions.InvalidRequestException;
 import dev.christopherbell.whatsforlunch.model.Restaurant;
 import dev.christopherbell.whatsforlunch.model.WhatsForLunchProperties;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class WhatsForLunchService {
 
+  private final TableClient tableClient;
   private final WhatsForLunchProperties whatsForLunchProperties;
   public static Restaurant restaurantOfTheDay;
   public static int randomNumberForRestaurant;

@@ -1,7 +1,6 @@
-package dev.christopherbell.thevoid.utils;
+package dev.christopherbell.libs.common.api.utils;
 
 import dev.christopherbell.libs.common.api.exceptions.InvalidRequestException;
-import dev.christopherbell.libs.common.api.utils.APIConstants;
 import dev.christopherbell.thevoid.common.VoidRequest;
 import dev.christopherbell.thevoid.account.model.dto.Account;
 import dev.christopherbell.thevoid.account.model.dto.AccountSecurity;
@@ -13,6 +12,8 @@ import java.util.List;
 import java.util.Objects;
 
 public final class ValidateUtil {
+
+  private ValidateUtil() {}
 
   public static final ArrayList<String> ACCEPTED_CLIENT_IDs = new ArrayList<>(
       List.of("void-client")

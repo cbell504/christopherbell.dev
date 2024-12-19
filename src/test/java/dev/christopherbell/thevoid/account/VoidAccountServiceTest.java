@@ -1,4 +1,4 @@
-package dev.christopherbell.thevoid.services;
+package dev.christopherbell.thevoid.account;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -9,12 +9,9 @@ import static org.mockito.Mockito.when;
 import dev.christopherbell.libs.common.api.exceptions.InvalidRequestException;
 import dev.christopherbell.libs.common.api.exceptions.ResourceExistsException;
 import dev.christopherbell.libs.common.api.utils.APIConstants;
-import dev.christopherbell.thevoid.account.AccountService;
 import dev.christopherbell.thevoid.common.VoidRequest;
 import dev.christopherbell.thevoid.account.model.entity.AccountEntity;
 import dev.christopherbell.thevoid.account.model.dto.Account;
-import dev.christopherbell.thevoid.account.AccountRepository;
-import dev.christopherbell.thevoid.account.AccountMessenger;
 import dev.christopherbell.thevoid.permission.PermissionsService;
 import dev.christopherbell.thevoid.testutils.AccountStub;
 import dev.christopherbell.thevoid.utils.mappers.MapStructMapper;
@@ -31,13 +28,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-public class AccountServiceTest {
+public class VoidAccountServiceTest {
   @InjectMocks
-  private AccountService accountService;
+  private VoidAccountService voidAccountService;
   @Mock
-  private AccountMessenger accountMessenger;
+  private VoidAccountMessenger voidAccountMessenger;
   @Mock
-  private AccountRepository accountRepository;
+  private VoidAccountRepository voidAccountRepository;
 
   private MapStructMapper mapStructMapper;
   @Mock
@@ -46,7 +43,7 @@ public class AccountServiceTest {
   @BeforeEach
   public void init() {
     mapStructMapper = new MapStructMapperImpl();
-    accountService = new AccountService(accountMessenger, accountRepository, mapStructMapper, permissionsService);
+    voidAccountService = new VoidAccountService(voidAccountMessenger, voidAccountRepository, mapStructMapper, permissionsService);
   }
 
   @Test
@@ -58,7 +55,7 @@ public class AccountServiceTest {
 
     var exception = assertThrows(
         InvalidRequestException.class,
-        () -> accountService.createAccount(clientId, request)
+        () -> voidAccountService.createAccount(clientId, request)
     );
 
     assertTrue(exception.getMessage().contains(APIConstants.VALIDATION_BAD_CLIENT_ID));
@@ -71,7 +68,7 @@ public class AccountServiceTest {
 
     var exception = assertThrows(
         InvalidRequestException.class,
-        () -> accountService.createAccount(clientId, request)
+        () -> voidAccountService.createAccount(clientId, request)
     );
 
     assertTrue(exception.getMessage().contains("The request is null"));
@@ -86,7 +83,7 @@ public class AccountServiceTest {
 
     var exception = assertThrows(
         InvalidRequestException.class,
-        () -> accountService.createAccount(clientId, request)
+        () -> voidAccountService.createAccount(clientId, request)
     );
 
     assertTrue(exception.getMessage().contains("The request contains no account information"));
@@ -103,7 +100,7 @@ public class AccountServiceTest {
 
     var exception = assertThrows(
         InvalidRequestException.class,
-        () -> accountService.createAccount(clientId, request)
+        () -> voidAccountService.createAccount(clientId, request)
     );
 
     assertTrue(exception.getMessage().contains("The given username is not valid"));
@@ -116,11 +113,11 @@ public class AccountServiceTest {
         .build();
     var clientId = AccountStub.getClientId();
 
-    when(accountRepository.findByUsername(anyString())).thenReturn(Optional.of(new AccountEntity()));
+    when(voidAccountRepository.findByUsername(anyString())).thenReturn(Optional.of(new AccountEntity()));
 
     var exception = assertThrows(
         ResourceExistsException.class,
-        () -> accountService.createAccount(clientId, request)
+        () -> voidAccountService.createAccount(clientId, request)
     );
 
     assertTrue(exception.getMessage().contains("Account with this username already exists"));
@@ -134,9 +131,9 @@ public class AccountServiceTest {
     accountEntities.add(AccountStub.getAccountEntity());
     accountEntities.add(AccountStub.getAccountEntity());
 
-    when(accountMessenger.getAccountEntities()).thenReturn(accountEntities);
+    when(voidAccountMessenger.getAccountEntities()).thenReturn(accountEntities);
 
-    var accountsResponse = accountService.getAccounts(AccountStub.getClientId());
+    var accountsResponse = voidAccountService.getAccounts(AccountStub.getClientId());
     var accounts = accountsResponse.getAccounts();
     var firstActualAccount = accounts.getFirst();
     var firstExpectedAccount = accountEntities.getFirst();

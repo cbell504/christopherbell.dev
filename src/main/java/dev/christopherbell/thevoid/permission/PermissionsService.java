@@ -2,8 +2,8 @@ package dev.christopherbell.thevoid.permission;
 
 import dev.christopherbell.libs.common.api.exceptions.ResourceNotFoundException;
 import dev.christopherbell.libs.common.api.exceptions.InvalidTokenException;
-import dev.christopherbell.thevoid.account.AccountRepository;
-import dev.christopherbell.thevoid.account.AccountSecurityRepository;
+import dev.christopherbell.thevoid.account.VoidAccountRepository;
+import dev.christopherbell.thevoid.account.VoidAccountSecurityRepository;
 import io.jsonwebtoken.Jwts;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +19,8 @@ import java.util.UUID;
 @Slf4j
 public class PermissionsService {
 
-  private final AccountRepository accountRepository;
-  private final AccountSecurityRepository accountSecurityRepository;
+  private final VoidAccountRepository voidAccountRepository;
+  private final VoidAccountSecurityRepository voidAccountSecurityRepository;
 
   /**
    * @param email
@@ -46,7 +46,7 @@ public class PermissionsService {
    */
   public boolean validateLoginToken(String loginToken, Long accountId)
       throws ResourceNotFoundException, InvalidTokenException {
-    var maybeAccountEntity = this.accountRepository.findById(accountId);
+    var maybeAccountEntity = this.voidAccountRepository.findById(accountId);
     if (maybeAccountEntity.isEmpty()) {
       throw new ResourceNotFoundException();
     }
@@ -66,7 +66,7 @@ public class PermissionsService {
    * @throws ResourceNotFoundException
    */
   public boolean validatePassword(String email, String password) throws ResourceNotFoundException {
-    var maybeAccountSecurityEntity = this.accountSecurityRepository.findByEmail(email);
+    var maybeAccountSecurityEntity = this.voidAccountSecurityRepository.findByEmail(email);
     if (maybeAccountSecurityEntity.isEmpty()) {
       throw new ResourceNotFoundException("No account found");
     }

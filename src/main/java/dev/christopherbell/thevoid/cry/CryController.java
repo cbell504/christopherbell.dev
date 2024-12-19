@@ -3,12 +3,14 @@ package dev.christopherbell.thevoid.cry;
 import dev.christopherbell.libs.common.api.models.Response;
 import dev.christopherbell.libs.common.api.exceptions.ResourceNotFoundException;
 import dev.christopherbell.libs.common.api.exceptions.InvalidTokenException;
+import dev.christopherbell.permission.PermissionService;
 import dev.christopherbell.thevoid.common.VoidRequest;
 import dev.christopherbell.thevoid.common.VoidResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,9 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class CryController {
 
   private final CryService cryService;
+  private final PermissionService permissionService;
 
 
   @PostMapping(value = "/v1/create/cry/{accountId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("@permissionService.hasAuthority('ADMIN')")
   public ResponseEntity<Response<VoidResponse>> createCry(@RequestHeader String clientId,
       @RequestHeader String loginToken,
       @PathVariable Long accountId,
@@ -37,6 +41,7 @@ public class CryController {
   }
 
   @GetMapping(value = "/v1/{accountId}", produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("@permissionService.hasAuthority('ADMIN')")
   public ResponseEntity<Response<VoidResponse>> getAllCriesByAccountId(@RequestHeader String clientId,
       @RequestHeader String loginToken,
       @PathVariable Long accountId) throws ResourceNotFoundException {

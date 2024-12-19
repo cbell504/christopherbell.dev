@@ -7,10 +7,10 @@ import dev.christopherbell.libs.common.api.utils.APIValidationUtils;
 import dev.christopherbell.thevoid.common.VoidRequest;
 import dev.christopherbell.thevoid.common.VoidResponse;
 import dev.christopherbell.thevoid.account.model.dto.Account;
-import dev.christopherbell.thevoid.account.AccountMessenger;
+import dev.christopherbell.thevoid.account.VoidAccountMessenger;
 import dev.christopherbell.thevoid.invite.model.InviteCodeEntity;
 import dev.christopherbell.thevoid.permission.PermissionsService;
-import dev.christopherbell.thevoid.utils.ValidateUtil;
+import dev.christopherbell.libs.common.api.utils.ValidateUtil;
 import dev.christopherbell.thevoid.utils.mappers.MapStructMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ import java.util.UUID;
 @Slf4j
 public class InviteCodeService {
 
-  private final AccountMessenger accountMessenger;
+  private final VoidAccountMessenger voidAccountMessenger;
   private final InviteCodeMessenger inviteCodeMessenger;
   private final MapStructMapper mapStructMapper;
   private final PermissionsService permissionsService;
@@ -52,7 +52,7 @@ public class InviteCodeService {
       throw new InvalidTokenException("Invalid token.");
     } else {
       // Build a template success response
-      var accountEntity = this.accountMessenger.getAccountEntityById(accountId);
+      var accountEntity = this.voidAccountMessenger.getAccountEntityById(accountId);
       var inviteCodeEntity = new InviteCodeEntity();
       inviteCodeEntity.setAccountEntity(accountEntity);
       inviteCodeEntity.setCode(UUID.randomUUID().toString());

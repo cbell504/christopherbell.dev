@@ -5,6 +5,7 @@ import dev.christopherbell.libs.common.api.exceptions.ResourceNotFoundException;
 import dev.christopherbell.libs.common.api.exceptions.InvalidRequestException;
 import dev.christopherbell.libs.common.api.exceptions.InvalidTokenException;
 import dev.christopherbell.libs.common.api.exceptions.ResourceExistsException;
+import dev.christopherbell.permission.PermissionService;
 import dev.christopherbell.thevoid.account.model.dto.AccountResponse;
 import dev.christopherbell.thevoid.account.model.dto.AccountsResponse;
 import dev.christopherbell.thevoid.common.VoidRequest;
@@ -13,6 +14,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,11 +25,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @AllArgsConstructor
-@RequestMapping("/api/accounts")
+@RequestMapping("/api/thevoid/accounts")
 @RestController
-public class AccountController {
+public class VoidAccountController {
 
-  private final AccountService accountService;
+  private final PermissionService permissionService;
+  private final VoidAccountService voidAccountService;
 
   /**
    * Get all accounts on file, clientId is required.
@@ -37,10 +40,11 @@ public class AccountController {
    * @throws InvalidRequestException - thrown is request is considered invalid
    */
   @GetMapping(value = "/v1", produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("@permissionService.hasAuthority('ADMIN')")
   public ResponseEntity<Response<AccountsResponse>> getAccounts(@RequestHeader String clientId)
       throws InvalidRequestException {
     return new ResponseEntity<>(Response.<AccountsResponse>builder()
-        .payload(accountService.getAccounts(clientId))
+        .payload(voidAccountService.getAccounts(clientId))
         .success(true)
         .build(), HttpStatus.OK);
   }
@@ -55,10 +59,11 @@ public class AccountController {
    * @throws ResourceNotFoundException - thrown if no accounts are on file with that id
    */
   @GetMapping(value = "/v1/{accountId}", produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("@permissionService.hasAuthority('ADMIN')")
   public ResponseEntity<Response<AccountResponse>> getAccountById(@RequestHeader String clientId,
       @PathVariable Long accountId) throws InvalidRequestException, ResourceNotFoundException {
     return new ResponseEntity<>(Response.<AccountResponse>builder()
-        .payload(accountService.getAccountById(clientId, accountId))
+        .payload(voidAccountService.getAccountById(clientId, accountId))
         .success(true)
         .build(), HttpStatus.OK);
   }
@@ -73,10 +78,11 @@ public class AccountController {
    * @throws ResourceNotFoundException - thrown if no accounts are on file with that username
    */
   @GetMapping(value = "/v1/username/{username}", produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("@permissionService.hasAuthority('ADMIN')")
   public ResponseEntity<Response<VoidResponse>> getAccountByUsername(@RequestHeader String clientId,
       @PathVariable String username) throws InvalidRequestException, ResourceNotFoundException {
     return new ResponseEntity<>(Response.<VoidResponse>builder()
-        .payload(accountService.getAccountByUsername(clientId, username))
+        .payload(voidAccountService.getAccountByUsername(clientId, username))
         .success(true)
         .build(), HttpStatus.OK);
   }
@@ -91,10 +97,11 @@ public class AccountController {
    * @throws ResourceExistsException - thrown if no accounts are on file with that username
    */
   @PostMapping(value = "/v1/", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("@permissionService.hasAuthority('ADMIN')")
   public ResponseEntity<Response<VoidResponse>> createAccount(@RequestHeader String clientId,
       @RequestBody VoidRequest voidRequest) throws InvalidRequestException, ResourceExistsException {
     return new ResponseEntity<>(Response.<VoidResponse>builder()
-        .payload(accountService.createAccount(clientId, voidRequest))
+        .payload(voidAccountService.createAccount(clientId, voidRequest))
         .success(true)
         .build(), HttpStatus.CREATED);
   }
@@ -110,12 +117,13 @@ public class AccountController {
    * @throws InvalidTokenException
    */
   @GetMapping(value = "/v1/active", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("@permissionService.hasAuthority('ADMIN')")
   public ResponseEntity<Response<AccountResponse>> getActiveAccount(@RequestHeader String clientId,
       @RequestHeader String loginToken,
       @RequestBody VoidRequest voidRequest)
       throws InvalidRequestException, ResourceExistsException, ResourceNotFoundException, InvalidTokenException {
     return new ResponseEntity<>(Response.<AccountResponse>builder()
-        .payload(accountService.getActiveAccount(clientId, loginToken, voidRequest))
+        .payload(voidAccountService.getActiveAccount(clientId, loginToken, voidRequest))
         .success(true)
         .build(), HttpStatus.OK);
   }
@@ -131,10 +139,11 @@ public class AccountController {
    * @throws InvalidTokenException    - thrown is login info is not correct
    */
   @PostMapping(value = "/v1/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("@permissionService.hasAuthority('ADMIN')")
   public ResponseEntity<Response<VoidResponse>> loginAccount(@RequestHeader String clientId,
       @RequestBody VoidRequest voidRequest)
       throws InvalidRequestException, ResourceNotFoundException, InvalidTokenException {
-    var response = this.accountService.loginAccount(clientId, voidRequest);
+    var response = this.voidAccountService.loginAccount(clientId, voidRequest);
     return new ResponseEntity<>(Response.<VoidResponse>builder()
         .payload(response)
         .success(true)
@@ -151,11 +160,12 @@ public class AccountController {
    * @throws InvalidTokenException
    */
   @GetMapping(value = "/v1/logout/{accountId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("@permissionService.hasAuthority('ADMIN')")
   public ResponseEntity<Response<VoidResponse>> logoutAccount(@RequestHeader String clientId,
       @RequestHeader String loginToken,
       @PathVariable Long accountId)
       throws InvalidRequestException, ResourceNotFoundException, InvalidTokenException {
-    var response = this.accountService.logoutAccount(clientId, loginToken, accountId);
+    var response = this.voidAccountService.logoutAccount(clientId, loginToken, accountId);
     return new ResponseEntity<>(Response.<VoidResponse>builder()
         .payload(response)
         .success(true)
@@ -171,12 +181,13 @@ public class AccountController {
    * @throws InvalidRequestException
    */
   @PatchMapping(value = "/v1/{accountId}/updateRole", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("@permissionService.hasAuthority('ADMIN')")
   public ResponseEntity<Response<VoidResponse>> updateRole(@RequestHeader String clientId,
       @RequestHeader String loginToken,
       @PathVariable Long accountID,
       @RequestBody VoidRequest voidRequest) throws InvalidRequestException {
     return new ResponseEntity<>(Response.<VoidResponse>builder()
-        .payload(accountService.updateRole(clientId, accountID, voidRequest))
+        .payload(voidAccountService.updateRole(clientId, accountID, voidRequest))
         .success(true)
         .build(), HttpStatus.OK);
   }

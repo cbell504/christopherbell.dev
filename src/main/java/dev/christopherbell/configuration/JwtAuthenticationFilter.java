@@ -1,13 +1,18 @@
 package dev.christopherbell.configuration;
 
+import dev.christopherbell.account.models.AccountEntity;
 import dev.christopherbell.permission.PermissionService;
 import io.jsonwebtoken.Claims;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,9 +29,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     this.skipMatchers.addAll(skipMatchers);
   }
 
+  /**
+   * Returns true if any skipMatcher matches the request
+   * @param request - request sent in by a client.
+   * @return boolean
+   */
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
-    // Return true if any skipMatcher matches the request
     return skipMatchers.stream().anyMatch(matcher -> matcher.matches(request));
   }
 
@@ -34,30 +43,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
       throws ServletException, IOException {
 
-    String authorizationHeader = request.getHeader("Authorization");
-
-    if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-      String token = authorizationHeader.substring(7);
-      Claims claims = PermissionService.validateToken(token);
-
-      if (claims != null) {
-        String username = claims.getSubject();
-
-        UsernamePasswordAuthenticationToken authenticationToken =
-            new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>());
-
-        authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+    String token = resolveToken(request);
+    if (token != null && Objects.nonNull(PermissionService.validateToken(token))) {
+      Authentication authenticationToken = getAuthentication(token);
+      SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+      if (authenticationToken.isAuthenticated()) {
+        chain.doFilter(request, response);
       } else {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        return;
       }
-    } else {
-      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-      return;
     }
+  }
 
-    chain.doFilter(request, response);
+  private String resolveToken(HttpServletRequest request) {
+    String bearerToken = request.getHeader("Authorization");
+    if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+      return bearerToken.substring(7);
+    }
+    return null;
+  }
+
+  private Authentication getAuthentication(String token) {
+    Claims claims = PermissionService.validateToken(token);
+    String username = claims.getSubject();
+    String roles = claims.get(AccountEntity.PROPERTY_ROLE, String.class);
+    List<GrantedAuthority> authorities = Arrays.stream(roles.split(","))
+        .map(SimpleGrantedAuthority::new)
+        .collect(Collectors.toList());
+    return new UsernamePasswordAuthenticationToken(username, token, authorities);
   }
 
 }

@@ -5,7 +5,7 @@ import dev.christopherbell.libs.common.api.exceptions.InvalidTokenException;
 import dev.christopherbell.thevoid.common.VoidRequest;
 import dev.christopherbell.thevoid.common.VoidResponse;
 import dev.christopherbell.thevoid.account.model.entity.AccountEntity;
-import dev.christopherbell.thevoid.account.AccountMessenger;
+import dev.christopherbell.thevoid.account.VoidAccountMessenger;
 import dev.christopherbell.thevoid.cry.model.Cry;
 import dev.christopherbell.thevoid.permission.PermissionsService;
 import dev.christopherbell.thevoid.utils.mappers.MapStructMapper;
@@ -21,7 +21,7 @@ import java.util.Objects;
 @Slf4j
 public class CryService {
 
-  private final AccountMessenger accountMessenger;
+  private final VoidAccountMessenger voidAccountMessenger;
   private final CryMessenger cryMessenger;
   private final MapStructMapper mapStructMapper;
   private final PermissionsService permissionsService;
@@ -47,7 +47,7 @@ public class CryService {
 
     // Convert Cry to CryEntity
     var cryEntity = this.mapStructMapper.mapToCryEntity(cry);
-    var accountEntity = this.accountMessenger.getAccountEntityById(accountId);
+    var accountEntity = this.voidAccountMessenger.getAccountEntityById(accountId);
     cryEntity.setAccountEntity(accountEntity);
     this.cryMessenger.saveCryRepository(cryEntity);
 
@@ -65,7 +65,7 @@ public class CryService {
     //var username = Jsoup.clean(dirtyUsername, Safelist.basic());
     log.info("Request for all cries for given accountId: " + accountId);
 
-    var accountEntity = this.accountMessenger.getAccountEntityById(accountId);
+    var accountEntity = this.voidAccountMessenger.getAccountEntityById(accountId);
     var cryEntities = this.cryMessenger.findByAccountEntity(accountEntity);
     var cries = new ArrayList<Cry>();
     for (var cryEntity : cryEntities) {

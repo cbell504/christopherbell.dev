@@ -5,6 +5,10 @@ logging:
     root: INFO
     org.springframework: INFO
     dev.christopherbell: INFO
+azure:
+  storage:
+    connection-string: "${AZURE_STORAGE_CONNECTION_STRING}"
+    table-name: "${AZURE_STORAGE_TABLE_NAME}"
 ---
 spring:
   profiles:

@@ -15,7 +15,7 @@ import dev.christopherbell.thevoid.common.VoidResponse;
 import dev.christopherbell.thevoid.account.model.dto.AccountDetails;
 import dev.christopherbell.thevoid.account.model.dto.AccountSecurity;
 import dev.christopherbell.thevoid.permission.PermissionsService;
-import dev.christopherbell.thevoid.utils.ValidateUtil;
+import dev.christopherbell.libs.common.api.utils.ValidateUtil;
 import dev.christopherbell.thevoid.utils.mappers.MapStructMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,10 +32,10 @@ import java.util.Objects;
 @AllArgsConstructor
 @Service
 @Slf4j
-public class AccountService {
+public class VoidAccountService {
 
-  private final AccountMessenger accountMessenger;
-  private final AccountRepository accountRepository;
+  private final VoidAccountMessenger voidAccountMessenger;
+  private final VoidAccountRepository voidAccountRepository;
   private final MapStructMapper mapStructMapper;
   private final PermissionsService permissionsService;
 
@@ -64,7 +64,7 @@ public class AccountService {
     var username = ValidateUtil.getCleanUsername(account);
     APIValidationUtils.isValidResource(APIConstants.VALIDATION_BAD_USERNAME, username);
 
-    var accountOptional = this.accountRepository.findByUsername(username);
+    var accountOptional = this.voidAccountRepository.findByUsername(username);
     if (accountOptional.isPresent()) {
       // The username already exist in our database so throw an exception
       throw new ResourceExistsException("Account with this username already exists");
@@ -86,9 +86,9 @@ public class AccountService {
       accountSecurityEntity.setLoginToken(jwt);
 
       // Save all entities to the DB
-      this.accountMessenger.saveAccountRepository(accountEntity);
-      this.accountMessenger.saveAccountDetailsRepository(accountDetailsEntity);
-      this.accountMessenger.saveAccountSecurityRepository(accountSecurityEntity);
+      this.voidAccountMessenger.saveAccountRepository(accountEntity);
+      this.voidAccountMessenger.saveAccountDetailsRepository(accountDetailsEntity);
+      this.voidAccountMessenger.saveAccountSecurityRepository(accountSecurityEntity);
 
       account = this.mapStructMapper.mapToAccount(accountEntity);
       var httpHeader = new HttpHeaders();
@@ -113,7 +113,7 @@ public class AccountService {
     // Validate clientId
     APIValidationUtils.isValidClientId(ValidateUtil.ACCEPTED_CLIENT_IDs, clientId);
 
-    var accountEntities = accountMessenger.getAccountEntities();
+    var accountEntities = voidAccountMessenger.getAccountEntities();
     var accounts = accountEntities.stream().map(accountEntity -> {
       var account = mapStructMapper.mapToAccount(accountEntity);
       var voidRoleEnum = VoidRolesEnum.valueOf(accountEntity.getVoidRoleEntity().getRole());
@@ -141,7 +141,7 @@ public class AccountService {
     APIValidationUtils.isValidClientId(ValidateUtil.ACCEPTED_CLIENT_IDs, clientId);
 
     // Pull Account info
-    var accountEntity = this.accountMessenger.getAccountEntityById(accountId);
+    var accountEntity = this.voidAccountMessenger.getAccountEntityById(accountId);
     var account = this.mapStructMapper.mapToAccount(accountEntity);
     var voidRoleEnum = VoidRolesEnum.valueOf(accountEntity.getVoidRoleEntity().getRole());
     account.setVoidRole(voidRoleEnum);
@@ -172,7 +172,7 @@ public class AccountService {
     var account = voidRequest.getAccount();
     var username = ValidateUtil.getCleanUsername(account);
 
-    var accountEntity = this.accountMessenger.getAccountEntityByUsername(username);
+    var accountEntity = this.voidAccountMessenger.getAccountEntityByUsername(username);
     var accountSecurityEntity = accountEntity.getAccountSecurityEntity();
     var dbLoginToken = accountSecurityEntity.getLoginToken();
 
@@ -223,9 +223,9 @@ public class AccountService {
     } else {
       // Generate and save the JWT to the DB
       var jwt = this.permissionsService.generateJWT(email);
-      var accountSecurityEntity = this.accountMessenger.getAccountSecurityEntityByEmail(email);
+      var accountSecurityEntity = this.voidAccountMessenger.getAccountSecurityEntityByEmail(email);
       accountSecurityEntity.setLoginToken(jwt);
-      this.accountMessenger.saveAccountSecurityRepository(accountSecurityEntity);
+      this.voidAccountMessenger.saveAccountSecurityRepository(accountSecurityEntity);
       // Pull our current account from accountSecurityEntity. We want to do this because when we first login,
       // the frontend won't know much about this account. We want to give them the basic items need to make more
       // request to the backend.
@@ -261,7 +261,7 @@ public class AccountService {
       throw new InvalidTokenException("Token is not valid.");
     }
 
-    var accountEntity = this.accountMessenger.getAccountEntityById(accountId);
+    var accountEntity = this.voidAccountMessenger.getAccountEntityById(accountId);
     var accountSecurityEntity = accountEntity.getAccountSecurityEntity();
     accountSecurityEntity.setLoginToken("");
 
@@ -282,7 +282,7 @@ public class AccountService {
     // Validate clientId
     APIValidationUtils.isValidClientId(ValidateUtil.ACCEPTED_CLIENT_IDs, clientId);
 
-    var accountEntity = this.accountMessenger.getAccountEntityByUsername(username);
+    var accountEntity = this.voidAccountMessenger.getAccountEntityByUsername(username);
     var account = this.mapStructMapper.mapToAccount(accountEntity);
     var voidRoleEnum = VoidRolesEnum.valueOf(accountEntity.getVoidRoleEntity().getRole());
     account.setVoidRole(voidRoleEnum);

@@ -2,26 +2,25 @@ package dev.christopherbell.whatsforlunch;
 
 import static org.mockito.Mockito.when;
 
+import com.azure.data.tables.TableClient;
 import dev.christopherbell.libs.common.api.exceptions.InvalidRequestException;
 import dev.christopherbell.whatsforlunch.model.WhatsForLunchProperties;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class WhatsForLunchServiceTest {
 
+  @InjectMocks
   private WhatsForLunchService whatsForLunchService;
   @Mock
   private WhatsForLunchProperties whatsForLunchProperties;
-
-  @BeforeEach
-  public void init() {
-    whatsForLunchService = new WhatsForLunchService(whatsForLunchProperties);
-  }
+  @Mock
+  private TableClient tableClient;
 
   @Test
   public void testSetRestaurantOfTheDay_success() {
