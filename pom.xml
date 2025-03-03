@@ -85,7 +85,7 @@
     <dependency>
       <groupId>com.azure</groupId>
       <artifactId>azure-data-tables</artifactId>
-      <version>12.5.1</version>
+      <version>12.5.2</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.samaxes.maven/minify-maven-plugin -->
