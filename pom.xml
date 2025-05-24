@@ -19,7 +19,7 @@
     <lombok.version>1.18.38</lombok.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <spring.version>3.4.4</spring.version>
+    <spring.version>3.5.0</spring.version>
   </properties>
 
   <dependencies>
