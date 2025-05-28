@@ -2,7 +2,7 @@ package dev.christopherbell.account;
 
 import com.azure.data.tables.models.TableEntity;
 import dev.christopherbell.account.model.entity.AccountEntity;
-import dev.christopherbell.account.model.Role;
+import dev.christopherbell.account.model.dto.Role;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.experimental.UtilityClass;

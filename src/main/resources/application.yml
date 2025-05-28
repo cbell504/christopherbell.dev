@@ -98,6 +98,13 @@ photo-properties:
       path: "/images/photos/IMG_1836.jpeg"
       description: n/a
       date-added: 10-24-2021
+security:
+  jwt:
+    secret: ""
+    expiration: 3600
+    issuer: "christopherbell.dev"
+    audience: "christopherbell.dev"
+    header: "Authorization"
 whats-for-lunch-properties:
   restaurants:
     - id: "b9dd3cd3-5b9f-4063-922c-fc808b05374a"

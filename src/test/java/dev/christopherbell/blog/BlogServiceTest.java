@@ -3,7 +3,7 @@ package dev.christopherbell.blog;
 import static org.mockito.Mockito.when;
 
 import dev.christopherbell.blog.model.BlogProperties;
-import dev.christopherbell.libs.common.api.exception.InvalidRequestException;
+import dev.christopherbell.libs.api.exception.InvalidRequestException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

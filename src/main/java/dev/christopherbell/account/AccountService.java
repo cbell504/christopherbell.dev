@@ -2,27 +2,27 @@ package dev.christopherbell.account;
 
 import com.azure.data.tables.TableClient;
 import com.azure.data.tables.models.ListEntitiesOptions;
-import com.azure.data.tables.models.TableEntity;
 import com.azure.data.tables.models.TableServiceException;
-import dev.christopherbell.account.model.Account;
+import dev.christopherbell.account.model.dto.Account;
 import dev.christopherbell.account.model.entity.AccountEntity;
-import dev.christopherbell.account.model.Role;
-import dev.christopherbell.libs.common.api.exception.InvalidRequestException;
-import dev.christopherbell.libs.common.api.exception.InvalidTokenException;
-import dev.christopherbell.libs.common.api.exception.ResourceNotFoundException;
-import dev.christopherbell.libs.common.api.util.PasswordUtils;
-import dev.christopherbell.permission.PermissionService;
+import dev.christopherbell.account.model.dto.Role;
+import dev.christopherbell.libs.api.exception.InvalidRequestException;
+import dev.christopherbell.libs.api.exception.InvalidTokenException;
+import dev.christopherbell.libs.api.exception.ResourceNotFoundException;
+import dev.christopherbell.libs.security.PasswordUtil;
+import dev.christopherbell.libs.security.PermissionService;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 /**
- * Represents the service responsible for handling getting, creating, updating, and deleting accounts.
+ * Represents the service responsible for handling getting, creating, updating, and deleting
+ * accounts.
  */
 @AllArgsConstructor
 @Slf4j
@@ -30,29 +30,8 @@ import org.springframework.stereotype.Service;
 public class AccountService {
 
   private final AccountMapper accountMapper;
+  private final PermissionService permissionService;
   private final TableClient tableClient;
-
-  /**
-   * Takes in an AccountEntity and returns back a TableEntity with all the properties from the AccountEntity.
-   *
-   * @param accountEntity - the AccountEntity to map to a TableEntity.
-   * @return a TableEntity mapped from the given AccountEntity.
-   */
-  public TableEntity buildTableEntityFromAccountEntity(AccountEntity accountEntity) {
-    return new TableEntity(
-        AccountEntity.PARTITION_KEY,
-        accountEntity.getEmail())
-        .addProperty(AccountEntity.PROPERTY_APPROVED_BY, accountEntity.getApprovedBy())
-        .addProperty(AccountEntity.PROPERTY_CREATED_ON, accountEntity.getCreatedOn())
-        .addProperty(AccountEntity.PROPERTY_EMAIL, accountEntity.getEmail())
-        .addProperty(AccountEntity.PROPERTY_FIRST_NAME, accountEntity.getFirstName())
-        .addProperty(AccountEntity.PROPERTY_IS_APPROVED, accountEntity.getIsApproved())
-        .addProperty(AccountEntity.PROPERTY_LAST_NAME, accountEntity.getLastName())
-        .addProperty(AccountEntity.PROPERTY_PASSWORD_HASH, accountEntity.getPasswordHash())
-        .addProperty(AccountEntity.PROPERTY_PASSWORD_SALT, accountEntity.getPasswordSalt())
-        .addProperty(AccountEntity.PROPERTY_ROLE, accountEntity.getRole())
-        .addProperty(AccountEntity.PROPERTY_USERNAME, accountEntity.getUsername());
-  }
 
   /**
    * Creates a new account.
@@ -63,21 +42,26 @@ public class AccountService {
    */
   public Account createAccount(Account account) throws InvalidRequestException {
     try {
+      String normalizedEmail = account.getEmail().toLowerCase();
+
+      // Check for existing email
+      var options = new ListEntitiesOptions().setFilter("email eq '" + normalizedEmail + "'");
+      var existing = tableClient.listEntities(options, null, null);
+      if (existing.iterator().hasNext()) {
+        throw new InvalidRequestException("Account with this email already exists");
+      }
+
       var accountEntity = createNewAccountEntity(account);
-      PasswordUtils.saltPassword(account, accountEntity);
-      var entity = buildTableEntityFromAccountEntity(accountEntity);
-      tableClient.createEntity(entity);
+      accountEntity.setRowKey(UUID.randomUUID().toString());
+      PasswordUtil.saltPassword(account, accountEntity);
+      var tableEntity = accountEntity.toTableEntity();
+      tableClient.createEntity(tableEntity);
       return accountMapper.toAccount(accountEntity);
     } catch (TableServiceException e) {
-      var statusCode = e.getResponse().getStatusCode();
-      if (HttpStatus.BAD_REQUEST.value() == statusCode) {
-        throw new RuntimeException("Failed to create account: " + e.getMessage(), e);
-      } else if(HttpStatus.ALREADY_REPORTED.value() == statusCode) {
-        throw new RuntimeException("Failed to create account: " + e.getMessage(), e);
-      }
+      handleTableServiceException(e, "create account");
       throw new InvalidRequestException("Failed to create account: " + e.getMessage(), e);
     } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-      throw new InvalidRequestException("Failed to create account due to password salting: " + e.getMessage(), e);
+      throw new InvalidRequestException("Password salting failed: " + e.getMessage(), e);
     }
   }
 
@@ -100,14 +84,46 @@ public class AccountService {
         .build();
   }
 
+  public Account deleteAccount(Account account) throws ResourceNotFoundException {
+    try {
+      var entity = tableClient.getEntity(AccountEntity.PARTITION_KEY, account.getRowKey());
+      tableClient.deleteEntity(entity.getPartitionKey(), entity.getRowKey());
+      return accountMapper.toAccount(TableEntityUtils.toAccountEntity(entity));
+    } catch (TableServiceException e) {
+      if (e.getResponse().getStatusCode() == 404) {
+        throw new ResourceNotFoundException("Account not found");
+      }
+      throw new RuntimeException("Failed to delete account", e);
+    }
+  }
+
   /**
    * Gets an account by its email address.
    *
-   * @param rowKey the email address of the account.
+   * @param email the email address of the account.
    * @return the account with the given email address.
    * @throws ResourceNotFoundException if the account cannot be found.
    */
-  public Account getAccount(String rowKey) throws ResourceNotFoundException {
+  public Account getAccountByEmail(String email) throws ResourceNotFoundException {
+    String normalizedEmail = email.toLowerCase();
+    var options = new ListEntitiesOptions().setFilter("email eq '" + normalizedEmail + "'");
+    var entities = tableClient.listEntities(options, null, null);
+    var iterator = entities.iterator();
+    if (!iterator.hasNext()) {
+      throw new ResourceNotFoundException("Account not found by email");
+    }
+    var accountEntity = TableEntityUtils.toAccountEntity(iterator.next());
+    return accountMapper.toAccount(accountEntity);
+  }
+
+  /**
+   * Gets an account by its id
+   *
+   * @param rowKey the id of the account.
+   * @return the account with the given id.
+   * @throws ResourceNotFoundException if the account cannot be found.
+   */
+  public Account getAccountById(String rowKey) throws ResourceNotFoundException {
     try {
       var entity = tableClient.getEntity(AccountEntity.PARTITION_KEY, rowKey);
       var accountEntity = TableEntityUtils.toAccountEntity(entity);
@@ -127,8 +143,9 @@ public class AccountService {
    */
   public List<Account> getAccounts() {
 
-    var options = new ListEntitiesOptions()
-        .setFilter("PartitionKey eq 'ACCOUNT'");
+    var options =
+        new ListEntitiesOptions()
+            .setFilter("PartitionKey eq '" + AccountEntity.PARTITION_KEY + "'");
     var accountEntities = tableClient.listEntities(options, null, null);
     return accountEntities.stream()
         .map(TableEntityUtils::toAccountEntity)
@@ -144,31 +161,40 @@ public class AccountService {
    * @throws InvalidTokenException - if login information is incorrect.
    */
   public String loginAccount(Account account) throws InvalidTokenException {
+    String normalizedEmail = account.getEmail().toLowerCase();
+    var options = new ListEntitiesOptions().setFilter("email eq '" + normalizedEmail + "'");
+    var entities = tableClient.listEntities(options, null, null);
+    var iterator = entities.iterator();
 
+    if (!iterator.hasNext()) {
+      throw new InvalidTokenException("Invalid login credentials");
+    }
+
+    var accountEntity = TableEntityUtils.toAccountEntity(iterator.next());
     try {
-      var email = account.getEmail();
-      var password = account.getPassword();
-
-      var options = new ListEntitiesOptions().setFilter("email eq '" + email + "'");
-      var tableEntityAccounts = tableClient.listEntities(options, null, null);
-      var accountEntities = tableEntityAccounts.stream()
-          .map(TableEntityUtils::toAccountEntity)
-          .toList();
-
-      var accountEntity = accountEntities.getFirst();
-      var salt = accountEntity.getPasswordSalt();
-      var hash = accountEntity.getPasswordHash();
-      var isValidPassword = PasswordUtils.verifyPassword(password, salt, hash);
-
-      if(isValidPassword) {
-        PermissionService.isAccountApproved(accountEntity);
-        return PermissionService.generateToken(accountEntity);
+      var isValidPassword =
+          PasswordUtil.verifyPassword(
+              account.getPassword(),
+              accountEntity.getPasswordSalt(),
+              accountEntity.getPasswordHash());
+      if (isValidPassword) {
+        permissionService.isAccountApproved(accountEntity);
+        return permissionService.generateToken(accountEntity);
       } else {
-        throw new InvalidTokenException("Given Login information was not correct.");
+        throw new InvalidTokenException("Invalid password");
       }
-    } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
+    } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+      throw new RuntimeException("Password verification failed", e);
     }
   }
 
+  private void handleTableServiceException(TableServiceException e, String action)
+      throws InvalidRequestException {
+    int code = e.getResponse().getStatusCode();
+    if (code == 400) {
+      throw new InvalidRequestException("Bad request during " + action + ": " + e.getMessage(), e);
+    } else if (code == 409) {
+      throw new InvalidRequestException("Conflict during " + action + ": " + e.getMessage(), e);
+    }
+  }
 }

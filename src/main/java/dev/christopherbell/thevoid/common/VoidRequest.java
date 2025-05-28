@@ -1,6 +1,6 @@
 package dev.christopherbell.thevoid.common;
 
-import dev.christopherbell.libs.common.api.model.Request;
+import dev.christopherbell.libs.api.model.Request;
 import dev.christopherbell.thevoid.cry.model.Cry;
 import dev.christopherbell.thevoid.account.model.dto.Account;
 import lombok.Data;
