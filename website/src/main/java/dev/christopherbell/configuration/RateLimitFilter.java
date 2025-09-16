@@ -29,11 +29,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
   private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
   /**
-   * Creates a filter with default limit of 50 requests per minute.
+   * Creates a filter with default limit of 10000 requests per minute.
    */
   public RateLimitFilter() {
     this(() -> Bucket4j.builder()
-        .addLimit(Bandwidth.simple(50, Duration.ofMinutes(1)))
+        .addLimit(Bandwidth.simple(10000, Duration.ofMinutes(1)))
         .build());
   }
 

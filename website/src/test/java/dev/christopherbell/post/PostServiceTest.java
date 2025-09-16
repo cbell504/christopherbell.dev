@@ -12,14 +12,20 @@ import static org.mockito.Mockito.when;
 
 import dev.christopherbell.account.AccountRepository;
 import dev.christopherbell.account.AccountServiceStub;
+import dev.christopherbell.account.model.Account;
 import dev.christopherbell.libs.api.exception.InvalidRequestException;
 import dev.christopherbell.libs.api.exception.ResourceNotFoundException;
 import dev.christopherbell.post.model.Post;
 import dev.christopherbell.post.model.PostCreateRequest;
 import dev.christopherbell.post.model.PostDetail;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +38,7 @@ public class PostServiceTest {
   @Mock private PostRepository postRepository;
   @Mock private AccountRepository accountRepository;
   @Mock private PostMapper postMapper;
+  @Mock private dev.christopherbell.permission.PermissionService permissionService;
   @InjectMocks private PostService postService;
 
   @Test
@@ -89,6 +96,30 @@ public class PostServiceTest {
 
     verify(accountRepository).findById(eq("missing"));
     verifyNoMoreInteractions(accountRepository);
+  }
+
+  @Test
+  @DisplayName("Create reply: parent expired -> 404 and cleanup")
+  public void testCreatePost_whenParentExpired_Throws404() throws Exception {
+    var existing = AccountServiceStub.getAccountWhenExistsStub();
+    var service = spy(postService);
+    doReturn(existing.getId()).when(service).getSelfId();
+    when(accountRepository.findById(eq(existing.getId()))).thenReturn(Optional.of(existing));
+
+    var expiredParent = Post.builder()
+        .id("parent")
+        .accountId("other")
+        .text("old")
+        .createdOn(Instant.now().minus(Duration.ofHours(48)))
+        .lastUpdatedOn(Instant.now().minus(Duration.ofHours(48)))
+        .expiresOn(Instant.now().minus(Duration.ofHours(1)))
+        .build();
+    when(postRepository.findById(eq("parent"))).thenReturn(Optional.of(expiredParent));
+
+    var request = PostCreateRequest.builder().text("child").parentId("parent").build();
+
+    assertThrows(ResourceNotFoundException.class, () -> service.createPost(request));
+    verify(postRepository).delete(eq(expiredParent));
   }
 
   @Test
@@ -152,8 +183,106 @@ public class PostServiceTest {
 
     verify(accountRepository).findById(eq(existing.getId()));
     verify(postRepository).findByAccountIdOrderByCreatedOnDesc(eq(existing.getId()));
+    verify(postRepository).save(eq(p1));
     verify(postMapper).toDetail(eq(p1));
     verifyNoMoreInteractions(accountRepository, postRepository, postMapper);
+  }
+
+  @Test
+  @DisplayName("Toggle like adjusts expiration window")
+  public void testToggleLike_updatesExpirationWithLikes() throws Exception {
+    var author = Account.builder().id("author").username("author").build();
+    var likerId = "liker";
+    var service = spy(postService);
+    doReturn(likerId).when(service).getSelfId();
+
+    var created = Instant.now().minus(Duration.ofHours(1));
+    var post = Post.builder()
+        .id("p1")
+        .accountId(author.getId())
+        .text("hello")
+        .createdOn(created)
+        .lastUpdatedOn(created)
+        .likesCount(0)
+        .likedBy(new HashSet<>())
+        .expiresOn(created.plus(Duration.ofHours(24)))
+        .build();
+
+    when(postRepository.findById(eq("p1"))).thenReturn(Optional.of(post));
+    when(accountRepository.findById(eq(author.getId()))).thenReturn(Optional.of(author));
+    when(postRepository.save(org.mockito.ArgumentMatchers.any(Post.class))).thenReturn(post);
+    when(postRepository.countByParentId(eq("p1"))).thenReturn(0L);
+
+    var likedItem = service.toggleLike("p1");
+    assertEquals(1, post.getLikesCount());
+    assertEquals(created.plus(Duration.ofHours(48)), post.getExpiresOn());
+    assertNotNull(likedItem);
+    assertEquals(true, likedItem.liked());
+
+    var unlikedItem = service.toggleLike("p1");
+    assertEquals(0, post.getLikesCount());
+    assertEquals(created.plus(Duration.ofHours(24)), post.getExpiresOn());
+    assertNotNull(unlikedItem);
+    assertEquals(false, unlikedItem.liked());
+  }
+
+  @Test
+  @DisplayName("Cleanup job assigns expirations before purging")
+  public void testPurgeExpiredPosts_backfillsMissingExpiration() {
+    var stale = Post.builder()
+        .id("p1")
+        .createdOn(Instant.now().minus(Duration.ofHours(2)))
+        .likesCount(1)
+        .build();
+
+    when(postRepository.findByExpiresOnIsNull()).thenReturn(List.of(stale));
+
+    postService.purgeExpiredPosts();
+
+    verify(postRepository).findByExpiresOnIsNull();
+    verify(postRepository).save(eq(stale));
+    verify(postRepository).deleteByExpiresOnLessThanEqual(org.mockito.ArgumentMatchers.any(Instant.class));
+    assertNotNull(stale.getExpiresOn());
+  }
+
+  @Test
+  @DisplayName("GlobalFeed: returns newest posts with usernames")
+  public void testGetGlobalFeed_returnsMappedItems() {
+    var p1 = Post.builder().id("p1").accountId("a1").text("t1").createdOn(Instant.now()).build();
+    var p2 = Post.builder().id("p2").accountId("a2").text("t2").createdOn(Instant.now()).build();
+    Page<Post> page = new PageImpl<>(List.of(p1, p2), PageRequest.of(0, 20), 2);
+
+    when(postRepository.findAll(org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class)))
+        .thenReturn(page);
+    when(accountRepository.findAllById(eq(List.of("a1", "a2"))))
+        .thenReturn(List.of(
+            Account.builder().id("a1").username("user1").build(),
+            Account.builder().id("a2").username("user2").build()
+        ));
+
+    var result = postService.getGlobalFeed(null, 20);
+    assertEquals(2, result.size());
+    assertEquals("p1", result.get(0).id());
+    assertEquals("user1", result.get(0).username());
+    assertEquals("p2", result.get(1).id());
+    assertEquals("user2", result.get(1).username());
+  }
+
+  @Test
+  @DisplayName("GlobalFeed: supports before cursor and limit")
+  public void testGetGlobalFeed_withBeforeAndLimit() {
+    var before = Instant.parse("2025-01-01T00:00:00Z");
+    var older = Post.builder().id("p0").accountId("a1").text("old").createdOn(Instant.parse("2024-12-31T23:59:00Z")).build();
+
+    when(postRepository.findByCreatedOnLessThanOrderByCreatedOnDesc(eq(before), org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class)))
+        .thenReturn(List.of(older));
+    when(accountRepository.findAllById(eq(List.of("a1"))))
+        .thenReturn(List.of(Account.builder().id("a1").username("user1").build()));
+
+    var result = postService.getGlobalFeed(before, 10);
+    assertEquals(1, result.size());
+    assertEquals("p0", result.get(0).id());
+    assertEquals("user1", result.get(0).username());
   }
 }
 

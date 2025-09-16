@@ -1,3 +1,9 @@
+/**
+ * PhotoGallery web component.
+ *
+ * Responsibilities:
+ * - Fetch image metadata and render a responsive grid
+ */
 class PhotoGallery extends HTMLElement {
     constructor() {
         super();

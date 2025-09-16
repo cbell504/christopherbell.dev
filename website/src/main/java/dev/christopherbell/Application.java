@@ -2,6 +2,7 @@ package dev.christopherbell;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Spring Boot application entry point.
@@ -9,6 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * <p>Bootstraps the application context and starts the embedded web server.</p>
  */
 @SpringBootApplication
+@EnableScheduling
 public class Application {
   /**
    * Starts the Spring Boot application.

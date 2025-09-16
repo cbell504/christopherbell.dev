@@ -47,7 +47,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
    */
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
-    return skipMatchers.stream().anyMatch(matcher -> matcher.matches(request));
+    boolean isPublic = skipMatchers.stream().anyMatch(matcher -> matcher.matches(request));
+    // If request carries a Bearer token, do not skip — authenticate even on public routes
+    String auth = request.getHeader("Authorization");
+    boolean hasBearer = auth != null && auth.startsWith("Bearer ");
+    return isPublic && !hasBearer;
   }
 
   @Override
@@ -55,14 +59,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
 
     String token = resolveToken(request);
-    if (token != null && Objects.nonNull(PermissionService.validateToken(token))) {
-      Authentication authenticationToken = getAuthentication(token);
-      SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-      if (authenticationToken.isAuthenticated()) {
-        chain.doFilter(request, response);
-      } else {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    if (token == null) {
+      // No token: continue as anonymous; downstream security will enforce access rules
+      chain.doFilter(request, response);
+      return;
+    }
+    try {
+      if (Objects.nonNull(PermissionService.validateToken(token))) {
+        Authentication authenticationToken = getAuthentication(token);
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        if (authenticationToken.isAuthenticated()) {
+          chain.doFilter(request, response);
+        } else {
+          response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        }
       }
+    } catch (Exception e) {
+      // Invalid token
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
   }
 

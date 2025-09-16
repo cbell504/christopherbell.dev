@@ -3,6 +3,7 @@ package dev.christopherbell.blog;
 import dev.christopherbell.blog.model.BlogResponse;
 import dev.christopherbell.libs.api.model.Response;
 import dev.christopherbell.libs.api.exception.InvalidRequestException;
+import dev.christopherbell.permission.PermissionService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,8 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/blog")
 @RestController
 public class BlogController {
-
   private final BlogService blogService;
+  private final PermissionService permissionService;
 
   /**
    * Retrieves a single post by its ID.
@@ -33,7 +34,7 @@ public class BlogController {
    * @return HTTP 200 with a {@link BlogResponse} containing the post
    */
   @GetMapping(value = "/v1/posts/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-  @PreAuthorize("@permissionService.hasAuthority('USER')")
+  @PreAuthorize("@permissionService.hasAuthority('ADMIN')")
   public ResponseEntity<Response<BlogResponse>> getBlogPostById(HttpServletRequest request, @PathVariable String id)
       throws InvalidRequestException {
     return new ResponseEntity<>(
@@ -49,7 +50,7 @@ public class BlogController {
    * @return HTTP 200 with a {@link BlogResponse} containing all posts
    */
   @GetMapping(value = "/v1/posts", produces = MediaType.APPLICATION_JSON_VALUE)
-  @PreAuthorize("@permissionService.hasAuthority('USER')")
+  @PreAuthorize("@permissionService.hasAuthority('ADMIN')")
   public ResponseEntity<Response<BlogResponse>> getBlogPosts(HttpServletRequest request) {
     return new ResponseEntity<>(
         Response.<BlogResponse>builder()

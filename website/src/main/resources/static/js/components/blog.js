@@ -1,3 +1,10 @@
+/**
+ * BlogPosts web component.
+ *
+ * Responsibilities:
+ * - Periodically fetch and render posts and tags
+ * - Allow filtering posts by tag
+ */
 class BlogPosts extends HTMLElement {
     constructor() {
         super();

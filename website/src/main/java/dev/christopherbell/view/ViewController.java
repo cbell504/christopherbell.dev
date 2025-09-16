@@ -16,7 +16,7 @@ public class ViewController {
    *
    * @return {@code index.html}
    */
-  @RequestMapping(value = {"/", "/blog", "/photos", "/login", "/signup", "/wfl"})
+  @RequestMapping(value = {"/", "/blog", "/photos", "/wfl"})
   public String getHomePage() {
     return "index.html";
   }
@@ -34,6 +34,44 @@ public class ViewController {
   @GetMapping(value = "/void")
   public String getVoidHomePage(HttpServletRequest request) {
     return "void/index.html";
+  }
+
+  /**
+   * Serves the Profile page.
+   *
+   * @return {@code profile.html}
+   */
+  @GetMapping(value = "/profile")
+  public String getProfilePage(HttpServletRequest request) {
+    return "profile.html";
+  }
+
+  /**
+   * Serves the login page.
+   *
+   * @return {@code login.html}
+   */
+  @GetMapping(value = "/login")
+  public String getLoginPage(HttpServletRequest request) {
+    return "login.html";
+  }
+
+  /**
+   * Serves the sign-up page.
+   *
+   * @return {@code signup.html}
+   */
+  @GetMapping(value = "/signup")
+  public String getSignupPage(HttpServletRequest request) {
+    return "signup.html";
+  }
+
+  /**
+   * Serves a public user profile/feed page by username.
+   */
+  @GetMapping(value = "/u/{username}")
+  public String getPublicUserPage(HttpServletRequest request) {
+    return "user.html";
   }
 
   /**
@@ -76,4 +114,9 @@ public class ViewController {
     return "thebell/tony.html";
   }
 
+  /** Serves an individual post page by id. */
+  @GetMapping(value = "/p/{postId}")
+  public String getPostPage(HttpServletRequest request) {
+    return "post.html";
+  }
 }

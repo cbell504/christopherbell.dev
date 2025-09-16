@@ -101,11 +101,11 @@ public class AccountService {
         .createdOn(Instant.now())
         .email(accountCreateRequest.email())
         .firstName(accountCreateRequest.firstName())
-        .isApproved(false)
+        .isApproved(true)
         .lastName(accountCreateRequest.lastName())
         .lastUpdatedOn(Instant.now())
         .role(Role.USER)
-        .status(AccountStatus.INACTIVE)
+        .status(AccountStatus.ACTIVE)
         .username(accountCreateRequest.username())
         .build();
   }
